@@ -1,4 +1,4 @@
-\# Application of Multivariate Methods in Data Science
+#Application of Multivariate Methods in Data Science
 
 
 
