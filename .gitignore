@@ -1,4 +1,4 @@
-__pycache__/
+﻿__pycache__/
 *.py[cod]
 *.egg-info/
 .venv/
@@ -10,5 +10,6 @@ reports/figures/
 data/*
 !data/.gitkeep
 !data/README.md
+!data/datasets.yml
 
 .env
