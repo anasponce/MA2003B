@@ -3,11 +3,10 @@
 Repositorio para análisis estadístico y métodos multivariados en Python.
 
 ## Estructura
-- `notebooks/`: notebooks exploratorios (usar kernel del proyecto).
-- `data`: datos crudos (se descargan localmente, no se versionan).
-- `data_limpia`: LISTA PARA USAR!
-
-Se deberán crear folders para los datos imputados y limpios.
+- `notebooks/`: notebooks exploratorios
+- `data`: datos crudos con sus notebooks de concatenación
+- `data_para_limpiar`: datos preparados para la limpieza de la Etapa 1
+- `data_limpia`: DATA PARA LA SEGUNDA ENTREGA
 
 ## Empezar a trabajar:
 
