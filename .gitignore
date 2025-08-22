@@ -5,3 +5,4 @@
 .vscode/
 reports/figures/
 .env
+.DS_Store
