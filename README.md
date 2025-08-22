@@ -8,3 +8,8 @@ Repositorio para análisis estadístico y métodos multivariados en Python.
 - `data_limpia`: LISTA PARA USAR!
 
 Se deberán crear folders para los datos imputados y limpios.
+
+## Empezar a trabajar:
+
+- crea entorno virtual
+- en la terminal: pip install -r requirements.txt 
