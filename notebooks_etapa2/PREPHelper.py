@@ -63,7 +63,7 @@ def visualize_outliers(df):
             capprops=dict(color="black"),
             medianprops=dict(color="darkred", linewidth=2)
         )
-        plt.title(f"$Boxplot\ de\ {col}$", fontsize=14, fontweight="bold", color="black")
+        plt.title(f"Boxplot de {col}", fontsize=14, fontweight="bold", color="black")
         plt.xlabel(f"{col} (µg/m³)", fontsize=12, color="black")
         sns.despine()
         plt.show()
@@ -84,7 +84,7 @@ def plot_histograms(df):
         sns.histplot(
             df[col],
             kde=True,
-            color="#FF69B4",   # rosa fuerte
+            color="#FF69B4",  
             alpha=0.6,
             edgecolor="white"
         )
@@ -102,3 +102,88 @@ def plot_correlation_heatmap(df):
     plt.title("Correlation Heatmap of Air Quality Variables")
     plt.show()
 
+from statsmodels.tsa.arima.model import ARIMA
+
+
+# algunos trials de imputación con forecasting
+
+
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
+
+def fill_missing_with_forecast(df, column, zoom=False):
+    """
+    Rellena valores faltantes en una serie temporal usando Exponential Smoothing.
+    Grafica antes y después con mejor visibilidad.
+    
+    Parámetros:
+        df (pd.DataFrame): DataFrame con índice de fechas y una columna de serie temporal.
+        column (str): Nombre de la columna a procesar.
+        zoom (bool): Si True, hace zoom en la zona donde había NaN.
+    
+    Retorna:
+        pd.DataFrame: DataFrame con los valores faltantes rellenados.
+    """
+    series = df[column]
+    
+    # Plot original con NaN
+    plt.figure(figsize=(12,5))
+    plt.plot(series, label="Original (con NaN)", color="red", alpha=0.7)
+    plt.title(f"Serie original con valores faltantes: {column}")
+    plt.legend()
+    plt.show()
+    
+    # Entrenar modelo (solo datos no nulos)
+    train = series.dropna()
+    model = ExponentialSmoothing(train, trend="add", seasonal=None)
+    fit = model.fit()
+    
+    # Forecast sobre todo el rango
+    forecast = fit.predict(start=series.index[0], end=series.index[-1])
+    
+    # Rellenar
+    filled = series.copy()
+    missing_idx = filled[filled.isna()].index
+    filled[missing_idx] = forecast[missing_idx]
+    
+    # Plot mejorado
+    plt.figure(figsize=(12,5))
+    plt.plot(series, label="Serie original", color="grey", alpha=0.6)
+    plt.plot(filled, label="Serie imputada", color="blue", linewidth=1.2, alpha=0.4)
+    
+    # marcar los puntos imputados
+    plt.scatter(missing_idx, filled.loc[missing_idx], 
+                color="deeppink", marker="o", s=40, label="Valores imputados")
+    
+    plt.title(f"Serie después de imputación con forecast: {column}")
+    plt.legend()
+    
+    # Si se pide zoom, mostrar solo donde había NaN
+    if zoom and len(missing_idx) > 0:
+        plt.xlim(missing_idx.min() - 20, missing_idx.max() + 20)
+    
+    plt.show()
+    
+    # Retornar DataFrame modificado
+    df_copy = df.copy()
+    df_copy[column] = filled
+    return df_copy
+
+from statsmodels.tsa.arima.model import ARIMA
+
+
+def fill_all_gaps_arima(df, columns, order=(1,1,1)):
+ 
+    full_index = pd.date_range(start=df.index.min(), end=df.index.max(), freq='h')
+    df = df.reindex(full_index)
+
+    for col in columns:
+        series = df[col]
+        series_int = series.reset_index(drop=True)
+        train = series_int.dropna()
+        model = ARIMA(train, order=order)
+        fit = model.fit()
+        forecast = fit.predict(start=0, end=len(series_int)-1)
+        series_int[series_int.isna()] = forecast[series_int.isna()]
+        df[col] = pd.Series(series_int.values, index=df.index)
+    
+    return df
