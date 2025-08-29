@@ -187,3 +187,67 @@ def fill_all_gaps_arima(df, columns, order=(1,1,1)):
         df[col] = pd.Series(series_int.values, index=df.index)
     
     return df
+
+from sklearn.linear_model import LinearRegression
+from sklearn.impute import SimpleImputer
+
+def impute_with_regression(df, columns):
+    df_imputed = df.copy()
+    
+    # Inicializar el imputador para las características (X) que tengan valores faltantes
+    imputer = SimpleImputer(strategy='mean')  # Usamos 'mean' o 'median' según lo que prefieras
+    
+    for col in columns:
+        # Seleccionar los registros donde no hay NaN en la columna objetivo
+        train_data = df[df[col].notna()]
+        # Seleccionar los registros donde hay NaN en la columna objetivo
+        test_data = df[df[col].isna()]
+        
+        # Definir las características (X) y la variable objetivo (y)
+        X_train = train_data.drop(columns=[col])  # Las demás columnas como características
+        y_train = train_data[col]  # La columna con valores a predecir
+        
+        # Imputar los valores faltantes en las características (X) antes de entrenar el modelo
+        X_train_imputed = imputer.fit_transform(X_train)
+        
+        # Entrenar el modelo de regresión
+        model = LinearRegression()
+        model.fit(X_train_imputed, y_train)
+
+        # Predecir los valores faltantes en el conjunto de test (donde la columna tiene NaN)
+        X_test = test_data.drop(columns=[col])  # Las mismas características
+        X_test_imputed = imputer.transform(X_test)  # Imputar también las características del conjunto de test
+        predicted_values = model.predict(X_test_imputed)
+        
+        # Asignar los valores predichos a los valores faltantes
+        df_imputed.loc[test_data.index, col] = predicted_values
+    
+    return df_imputed
+
+from sklearn.ensemble import RandomForestRegressor
+
+def impute_with_random_forest(df, columns):
+    df_imputed = df.copy()
+
+    for col in columns:
+        # Seleccionar los registros donde no hay NaN
+        train_data = df[df[col].notna()]
+        # Seleccionar los registros donde hay NaN
+        test_data = df[df[col].isna()]
+
+        # Definir las características y la variable objetivo
+        X_train = train_data.drop(columns=[col])  # Las demás columnas como características
+        y_train = train_data[col]  # La columna con valores a predecir
+
+        # Entrenar el modelo de Random Forest
+        model = RandomForestRegressor(n_estimators=100)
+        model.fit(X_train, y_train)
+
+        # Predecir los valores faltantes
+        X_test = test_data.drop(columns=[col])  # Las mismas características
+        predicted_values = model.predict(X_test)
+
+        # Asignar los valores predichos a los missing values
+        df_imputed.loc[test_data.index, col] = predicted_values
+
+    return df_imputed
